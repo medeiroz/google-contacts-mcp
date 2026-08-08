@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.*
+*.log
+coverage/
+# OAuth credentials and tokens must never be versioned.
+*token*.json
+*secret*.json
+credentials*.json

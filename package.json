@@ -1,0 +1,20 @@
+{
+  "name": "google-contacts-mcp",
+  "version": "1.0.0",
+  "description": "A credential-free Model Context Protocol server for Google Contacts",
+  "main": "index.js",
+  "bin": {
+    "google-contacts-mcp": "index.js"
+  },
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
