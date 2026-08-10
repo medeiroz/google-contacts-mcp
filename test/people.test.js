@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { tokenPathFromEnv } = require('../src/auth');
-const { compactContact, matchesQuery, personBody, requireConfirmation } = require('../src/people');
+const { compactContact, matchesQuery, personBody, requireConfirmation, updateContactEndpoint } = require('../src/people');
 
 test('token path is opt-in and never defaults to a credential location', () => {
   assert.throws(() => tokenPathFromEnv({}), /GOOGLE_CONTACTS_TOKEN_PATH/);
@@ -26,4 +26,8 @@ test('write payload changes only supplied fields', () => {
 test('writes require an explicit confirmation flag', () => {
   assert.throws(() => requireConfirmation({}), /confirm: true/);
   assert.doesNotThrow(() => requireConfirmation({ confirm: true }));
+});
+
+test('update uses the People API updateContact action endpoint', () => {
+  assert.equal(updateContactEndpoint('people/c123'), 'people/c123:updateContact');
 });

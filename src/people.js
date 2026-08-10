@@ -32,8 +32,12 @@ function personBody({ name, email, phone }) {
   return body;
 }
 
+function updateContactEndpoint(resourceName) {
+  return `${resourceName}:updateContact`;
+}
+
 function requireConfirmation(args) {
   if (args.confirm !== true) throw new Error('Set confirm: true to perform this write operation');
 }
 
-module.exports = { normalize, compactContact, matchesQuery, personBody, requireConfirmation };
+module.exports = { normalize, compactContact, matchesQuery, personBody, updateContactEndpoint, requireConfirmation };

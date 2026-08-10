@@ -3,7 +3,7 @@ const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 const { ListToolsRequestSchema, CallToolRequestSchema } = require('@modelcontextprotocol/sdk/types.js');
 const { peopleRequest } = require('./src/auth');
-const { compactContact, matchesQuery, personBody, requireConfirmation } = require('./src/people');
+const { compactContact, matchesQuery, personBody, updateContactEndpoint, requireConfirmation } = require('./src/people');
 const pkg = require('./package.json');
 
 const PERSON_FIELDS = 'names,emailAddresses,phoneNumbers';
@@ -65,7 +65,7 @@ async function updateContact(args = {}) {
   if (!fields.length) throw new Error('Provide at least one of name, email or phone');
   const existing = await peopleRequest(args.resource_name, { query: { personFields: PERSON_FIELDS } });
   const body = { ...existing, ...personBody(args) };
-  return compactContact(await peopleRequest(args.resource_name, {
+  return compactContact(await peopleRequest(updateContactEndpoint(args.resource_name), {
     method: 'PATCH', query: { updatePersonFields: fields.join(',') }, body,
   }));
 }
