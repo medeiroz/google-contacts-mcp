@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { tokenPathFromEnv } = require('../src/auth');
-const { compactContact, matchesQuery, personBody, requireConfirmation, updateContactEndpoint } = require('../src/people');
+const { compactContact, matchesQuery, personBody, mergeUpdateBody, requireConfirmation, updateContactEndpoint } = require('../src/people');
 
 test('token path is opt-in and never defaults to a credential location', () => {
   assert.throws(() => tokenPathFromEnv({}), /GOOGLE_CONTACTS_TOKEN_PATH/);
@@ -21,6 +21,14 @@ test('contact summaries do not include raw People API metadata', () => {
 
 test('write payload changes only supplied fields', () => {
   assert.deepEqual(personBody({ name: 'Ana', email: 'ana@example.com' }), { names: [{ unstructuredName: 'Ana' }], emailAddresses: [{ value: 'ana@example.com' }] });
+});
+
+test('update preserves existing collection items and sends the etag', () => {
+  const existing = { resourceName: 'people/c1', etag: 'etag-1', emailAddresses: [{ value: 'old@example.com', type: 'work', metadata: { primary: true } }], phoneNumbers: [{ value: '+55 11 99999-9999', type: 'mobile' }] };
+  assert.deepEqual(mergeUpdateBody(existing, { email: 'new@example.com' }), {
+    resourceName: 'people/c1', etag: 'etag-1',
+    emailAddresses: [{ value: 'old@example.com', type: 'work', metadata: { primary: true } }, { value: 'new@example.com' }],
+  });
 });
 
 test('writes require an explicit confirmation flag', () => {

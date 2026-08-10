@@ -32,6 +32,20 @@ function personBody({ name, email, phone }) {
   return body;
 }
 
+function mergeUpdateBody(existing, { name, email, phone }) {
+  const body = { resourceName: existing.resourceName, etag: existing.etag };
+  if (name !== undefined) body.names = name ? [{ unstructuredName: name }] : [];
+  if (email !== undefined) {
+    const current = existing.emailAddresses || [];
+    body.emailAddresses = email && !current.some(item => normalize(item.value) === normalize(email)) ? [...current, { value: email }] : current;
+  }
+  if (phone !== undefined) {
+    const current = existing.phoneNumbers || [];
+    body.phoneNumbers = phone && !current.some(item => String(item.value || '').replace(/\D/g, '') === String(phone).replace(/\D/g, '')) ? [...current, { value: phone }] : current;
+  }
+  return body;
+}
+
 function updateContactEndpoint(resourceName) {
   return `${resourceName}:updateContact`;
 }
@@ -40,4 +54,4 @@ function requireConfirmation(args) {
   if (args.confirm !== true) throw new Error('Set confirm: true to perform this write operation');
 }
 
-module.exports = { normalize, compactContact, matchesQuery, personBody, updateContactEndpoint, requireConfirmation };
+module.exports = { normalize, compactContact, matchesQuery, personBody, mergeUpdateBody, updateContactEndpoint, requireConfirmation };
