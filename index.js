@@ -3,10 +3,23 @@ const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 const { ListToolsRequestSchema, CallToolRequestSchema } = require('@modelcontextprotocol/sdk/types.js');
 const { peopleRequest } = require('./src/auth');
-const { compactContact, matchesQuery, personBody, mergeUpdateBody, updateContactEndpoint, requireConfirmation } = require('./src/people');
+const { compactContact, matchesQuery, personBody, mergeUpdateBody, updateContactEndpoint, deleteContactEndpoint, requireConfirmation } = require('./src/people');
 const pkg = require('./package.json');
 
-const PERSON_FIELDS = 'names,emailAddresses,phoneNumbers';
+const PERSON_FIELDS = 'names,emailAddresses,phoneNumbers,memberships';
+
+async function loadContactGroupNames() {
+  const names = new Map();
+  let pageToken;
+  do {
+    const response = await peopleRequest('contactGroups', { query: { pageSize: 1000, pageToken } });
+    for (const group of response.contactGroups || []) {
+      if (group.resourceName && group.name) names.set(group.resourceName, group.name);
+    }
+    pageToken = response.nextPageToken;
+  } while (pageToken);
+  return names;
+}
 
 function json(value) {
   return { content: [{ type: 'text', text: JSON.stringify(value, null, 2) }] };
@@ -14,11 +27,12 @@ function json(value) {
 
 async function listContacts(args = {}) {
   const pageSize = Math.min(Math.max(Number(args.page_size) || 100, 1), 1000);
+  const contactGroupNames = await loadContactGroupNames();
   const response = await peopleRequest('people/me/connections', {
     query: { personFields: PERSON_FIELDS, pageSize, pageToken: args.page_token },
   });
   return {
-    contacts: (response.connections || []).map(compactContact),
+    contacts: (response.connections || []).map(person => compactContact(person, contactGroupNames)),
     next_page_token: response.nextPageToken || null,
     total_people: response.totalPeople ?? null,
   };
@@ -28,6 +42,7 @@ async function searchContacts(args = {}) {
   const query = String(args.query || '').trim();
   if (!query) throw new Error('query is required');
   const limit = Math.min(Math.max(Number(args.limit) || 50, 1), 500);
+  const contactGroupNames = await loadContactGroupNames();
   const matches = [];
   let pageToken;
   do {
@@ -36,7 +51,7 @@ async function searchContacts(args = {}) {
     });
     for (const person of response.connections || []) {
       if (matchesQuery(person, query)) {
-        matches.push(compactContact(person));
+        matches.push(compactContact(person, contactGroupNames));
         if (matches.length >= limit) return { contacts: matches, truncated: true };
       }
     }
@@ -47,7 +62,9 @@ async function searchContacts(args = {}) {
 
 async function getContact(args = {}) {
   if (!args.resource_name) throw new Error('resource_name is required');
-  return compactContact(await peopleRequest(args.resource_name, { query: { personFields: PERSON_FIELDS } }));
+  const contactGroupNames = await loadContactGroupNames();
+  const person = await peopleRequest(args.resource_name, { query: { personFields: PERSON_FIELDS } });
+  return compactContact(person, contactGroupNames);
 }
 
 async function createContact(args = {}) {
@@ -74,7 +91,7 @@ async function updateContact(args = {}) {
 async function deleteContact(args = {}) {
   requireConfirmation(args);
   if (!args.resource_name) throw new Error('resource_name is required');
-  await peopleRequest(args.resource_name, { method: 'DELETE' });
+  await peopleRequest(deleteContactEndpoint(args.resource_name), { method: 'DELETE' });
   return { deleted: true, resource_name: args.resource_name };
 }
 

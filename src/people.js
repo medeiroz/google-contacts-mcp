@@ -5,14 +5,19 @@ function normalize(value) {
     .toLocaleLowerCase('pt-BR');
 }
 
-function compactContact(person) {
+function compactContact(person, contactGroupNames = new Map()) {
   const names = person.names || [];
+  const tags = (person.memberships || [])
+    .map(item => item.contactGroupMembership?.contactGroupResourceName)
+    .map(resourceName => contactGroupNames.get(resourceName))
+    .filter(Boolean);
   return {
     resource_name: person.resourceName || '',
     etag: person.etag || '',
     name: names[0]?.displayName || names[0]?.unstructuredName || '',
     emails: (person.emailAddresses || []).map(item => item.value).filter(Boolean),
     phones: (person.phoneNumbers || []).map(item => item.value).filter(Boolean),
+    tags,
   };
 }
 
@@ -50,8 +55,12 @@ function updateContactEndpoint(resourceName) {
   return `${resourceName}:updateContact`;
 }
 
+function deleteContactEndpoint(resourceName) {
+  return `${resourceName}:deleteContact`;
+}
+
 function requireConfirmation(args) {
   if (args.confirm !== true) throw new Error('Set confirm: true to perform this write operation');
 }
 
-module.exports = { normalize, compactContact, matchesQuery, personBody, mergeUpdateBody, updateContactEndpoint, requireConfirmation };
+module.exports = { normalize, compactContact, matchesQuery, personBody, mergeUpdateBody, updateContactEndpoint, deleteContactEndpoint, requireConfirmation };

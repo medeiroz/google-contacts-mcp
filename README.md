@@ -26,6 +26,8 @@ Do not commit your OAuth token or client-secret JSON. If a credential is ever co
 | `delete_contact` | Permanently delete a contact; requires `confirm: true`. |
 | `contacts_stats` | Count all contacts. |
 
+`list_contacts`, `search_contacts` e `get_contact` retornam também `tags`: os nomes dos rótulos/grupos do Google Contacts vinculados ao contato. Isso permite que consumidores apliquem políticas como ignorar contatos com a tag `Não Atualizar Automático` sem depender de texto no nome ou em campos pessoais.
+
 ## Requirements
 
 - Node.js 18 or newer.

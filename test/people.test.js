@@ -14,9 +14,22 @@ test('search normalizes accents and requires all words', () => {
   assert.equal(matchesQuery(person, 'ines lima'), false);
 });
 
-test('contact summaries do not include raw People API metadata', () => {
-  const result = compactContact({ resourceName: 'people/c1', etag: 'abc', names: [{ displayName: 'Ana' }], emailAddresses: [{ value: 'ana@example.com' }], phoneNumbers: [{ value: '+55 11 99999-9999' }], metadata: { sources: [] } });
-  assert.deepEqual(result, { resource_name: 'people/c1', etag: 'abc', name: 'Ana', emails: ['ana@example.com'], phones: ['+55 11 99999-9999'] });
+test('contact summaries expose Google Contact labels as tags without raw metadata', () => {
+  const result = compactContact({
+    resourceName: 'people/c1', etag: 'abc', names: [{ displayName: 'Ana' }],
+    emailAddresses: [{ value: 'ana@example.com' }], phoneNumbers: [{ value: '+55 11 99999-9999' }],
+    memberships: [
+      { contactGroupMembership: { contactGroupResourceName: 'contactGroups/no-auto-update' } },
+      { contactGroupMembership: { contactGroupResourceName: 'contactGroups/myContacts' } },
+    ], metadata: { sources: [] },
+  }, new Map([
+    ['contactGroups/no-auto-update', 'Não Atualizar Automático'],
+    ['contactGroups/myContacts', 'myContacts'],
+  ]));
+  assert.deepEqual(result, {
+    resource_name: 'people/c1', etag: 'abc', name: 'Ana', emails: ['ana@example.com'],
+    phones: ['+55 11 99999-9999'], tags: ['Não Atualizar Automático', 'myContacts'],
+  });
 });
 
 test('write payload changes only supplied fields', () => {
