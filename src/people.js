@@ -44,10 +44,7 @@ function mergeUpdateBody(existing, { name, email, phone }) {
     const current = existing.emailAddresses || [];
     body.emailAddresses = email && !current.some(item => normalize(item.value) === normalize(email)) ? [...current, { value: email }] : current;
   }
-  if (phone !== undefined) {
-    const current = existing.phoneNumbers || [];
-    body.phoneNumbers = phone && !current.some(item => String(item.value || '').replace(/\D/g, '') === String(phone).replace(/\D/g, '')) ? [...current, { value: phone }] : current;
-  }
+  if (phone !== undefined) body.phoneNumbers = phone ? [{ value: phone }] : [];
   return body;
 }
 

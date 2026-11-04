@@ -36,11 +36,19 @@ test('write payload changes only supplied fields', () => {
   assert.deepEqual(personBody({ name: 'Ana', email: 'ana@example.com' }), { names: [{ unstructuredName: 'Ana' }], emailAddresses: [{ value: 'ana@example.com' }] });
 });
 
-test('update preserves existing collection items and sends the etag', () => {
+test('update preserves existing email collection items and sends the etag', () => {
   const existing = { resourceName: 'people/c1', etag: 'etag-1', emailAddresses: [{ value: 'old@example.com', type: 'work', metadata: { primary: true } }], phoneNumbers: [{ value: '+55 11 99999-9999', type: 'mobile' }] };
   assert.deepEqual(mergeUpdateBody(existing, { email: 'new@example.com' }), {
     resourceName: 'people/c1', etag: 'etag-1',
     emailAddresses: [{ value: 'old@example.com', type: 'work', metadata: { primary: true } }, { value: 'new@example.com' }],
+  });
+});
+
+test('update replaces phone collection with the canonical supplied phone', () => {
+  const existing = { resourceName: 'people/c1', etag: 'etag-1', phoneNumbers: [{ value: '+55 11 99999-9999', type: 'mobile' }] };
+  assert.deepEqual(mergeUpdateBody(existing, { phone: '+55 11 98888-8888' }), {
+    resourceName: 'people/c1', etag: 'etag-1',
+    phoneNumbers: [{ value: '+55 11 98888-8888' }],
   });
 });
 
